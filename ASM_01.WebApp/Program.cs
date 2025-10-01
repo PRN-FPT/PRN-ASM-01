@@ -15,10 +15,6 @@ builder.Services.AddDbContext<EVRetailsDbContext>(options =>
 
 // Dependency Injection for repositories
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-//builder.Services.AddScoped<IDealerRepository, DealerRepository>();
-builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
-builder.Services.AddScoped<IStockRepository, StockRepository>();
-//builder.Services.AddScoped<IDistributionRequestRepository, DistributionRequestRepository>();
 
 // Dependency Injection for services
 //builder.Services.AddScoped<ISimpleAuthService, SimpleAuthService>();
