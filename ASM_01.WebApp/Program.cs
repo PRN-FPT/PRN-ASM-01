@@ -1,5 +1,3 @@
-using ASM_01.BusinessLayer.Services;
-using ASM_01.BusinessLayer.Services.Abstract;
 using ASM_01.DataAccessLayer;
 using ASM_01.DataAccessLayer.Persistence;
 using ASM_01.DataAccessLayer.Repositories;
@@ -15,16 +13,30 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<EVRetailsDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Dependency Injection for repositories
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+//builder.Services.AddScoped<IDealerRepository, DealerRepository>();
+builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
+builder.Services.AddScoped<IStockRepository, StockRepository>();
+//builder.Services.AddScoped<IDistributionRequestRepository, DistributionRequestRepository>();
+
+// Dependency Injection for services
+//builder.Services.AddScoped<ISimpleAuthService, SimpleAuthService>();
+//builder.Services.AddScoped<IDistributionManagementService, DistributionManagementService>();
+//builder.Services.AddScoped<IDealerInventoryService, DealerInventoryService>();
+//builder.Services.AddScoped<IVehicleService, VehicleService>();
+
+
 builder.Services
-                .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(options =>
-                {
-                    options.LoginPath = "/Auth/Login";
-                    options.AccessDeniedPath = "/Auth/Denied";
-                    options.Cookie.Name = "EVRetails.auth";
-                    options.ExpireTimeSpan = TimeSpan.FromHours(8);
-                    options.SlidingExpiration = true;
-                });
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Auth/Login";
+        options.AccessDeniedPath = "/Auth/Denied";
+        options.Cookie.Name = "EVRetails.auth";
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+    });
 
 builder.Services.AddAuthorization();
 var app = builder.Build();

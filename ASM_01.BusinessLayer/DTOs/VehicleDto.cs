@@ -2,5 +2,16 @@
 {
     public class VehicleDto
     {
+        public int VehicleId { get; set; }
+        public string ModelName { get; set; } = string.Empty;
+        public string TrimName { get; set; } = string.Empty;
+        public int TrimId { get; set; }
+        public decimal Price { get; set; }
+        public DateTime EffectiveDate { get; set; }
+        public Dictionary<string, string> Specifications { get; set; } = new();
+        public int? ModelYear { get; set; }
+        public int ModelId { get; set; }
+        public string? Description { get; set; }
+        public string Status { get; set; } = string.Empty;
     }
 }
