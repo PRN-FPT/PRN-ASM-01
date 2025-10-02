@@ -73,7 +73,7 @@ namespace ASM_01.WebApp.Controllers
                     requestCreateViewModel.EvTrimId,
                     requestCreateViewModel.Quantity);
                 TempData["Success"] = "Request created successfully.";
-                return RedirectToAction("Index", "Request");
+                return RedirectToAction(nameof(MyRequests));
             }
             catch (Exception)
             {
@@ -113,7 +113,7 @@ namespace ASM_01.WebApp.Controllers
                     RequestId = r.RequestId,
                     DealerName = r.DealerName,
                     ModelName = r.ModelName,
-                    TrimName = r.DealerName,
+                    TrimName = r.TrimName,
                     ModelYear = r.ModelYear,
                     RequestQuantity = r.RequestQuantity,
                     ApprovedQuantity = r.ApprovedQuantity,
@@ -140,7 +140,7 @@ namespace ASM_01.WebApp.Controllers
                 TempData["Error"] = $"Approval failed: {ex.Message}";
             }
 
-            return RedirectToAction("Pending");
+            return RedirectToAction(nameof(Pending));
         }
 
         [Authorize(Roles = "DISTRIBUTOR")]
@@ -158,7 +158,7 @@ namespace ASM_01.WebApp.Controllers
                 TempData["Error"] = $"Rejection failed: {ex.Message}";
             }
 
-            return RedirectToAction("Pending");
+            return RedirectToAction(nameof(Pending));
         }
 
         [Authorize(Roles = "DISTRIBUTOR")]
@@ -176,7 +176,7 @@ namespace ASM_01.WebApp.Controllers
                 TempData["Error"] = $"Completion failed: {ex.Message}";
             }
 
-            return RedirectToAction("Index");
+            return RedirectToAction(nameof(Index));
         }
     }
 }

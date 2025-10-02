@@ -23,11 +23,10 @@ builder.Services.AddScoped<IStockRepository, StockRepository>();
 builder.Services.AddScoped<IDistributionRequestRepository, DistributionRequestRepository>();
 
 // Dependency Injection for services
-//builder.Services.AddScoped<ISimpleAuthService, SimpleAuthService>();
+builder.Services.AddScoped<ISimpleAuthService, SimpleAuthService>();
+builder.Services.AddScoped<IVehicleService, VehicleService>();
 builder.Services.AddScoped<IDistributionManagementService, DistributionManagementService>();
 builder.Services.AddScoped<IDealerInventoryService, DealerInventoryService>();
-builder.Services.AddScoped<IVehicleService,  VehicleService>();
-builder.Services.AddScoped<IDistributionManagementService, DistributionManagementService>();
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

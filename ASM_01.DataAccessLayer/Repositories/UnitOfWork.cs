@@ -14,11 +14,6 @@ public class UnitOfWork : IUnitOfWork
         _context = context;
     }
 
-    public IVehicleRepository Vehicles { get; }
-    public IDealerRepository Dealers { get; }
-    public IStockRepository Stocks { get; }
-    public IDistributionRequestRepository DistributionRequests { get; }
-
     public async Task<int> SaveChangesAsync()
     {
         return await _context.SaveChangesAsync();
