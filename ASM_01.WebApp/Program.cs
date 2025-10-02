@@ -2,6 +2,8 @@ using ASM_01.DataAccessLayer;
 using ASM_01.DataAccessLayer.Persistence;
 using ASM_01.DataAccessLayer.Repositories;
 using ASM_01.DataAccessLayer.Repositories.Abstract;
+using ASM_01.BusinessLayer.Services;
+using ASM_01.BusinessLayer.Services.Abstract;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,13 +17,17 @@ builder.Services.AddDbContext<EVRetailsDbContext>(options =>
 
 // Dependency Injection for repositories
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
+builder.Services.AddScoped<IDealerRepository, DealerRepository>();
+builder.Services.AddScoped<IStockRepository, StockRepository>();
+builder.Services.AddScoped<IDistributionRequestRepository, DistributionRequestRepository>();
 
 // Dependency Injection for services
 //builder.Services.AddScoped<ISimpleAuthService, SimpleAuthService>();
-//builder.Services.AddScoped<IDistributionManagementService, DistributionManagementService>();
-//builder.Services.AddScoped<IDealerInventoryService, DealerInventoryService>();
-//builder.Services.AddScoped<IVehicleService, VehicleService>();
-
+builder.Services.AddScoped<IDistributionManagementService, DistributionManagementService>();
+builder.Services.AddScoped<IDealerInventoryService, DealerInventoryService>();
+builder.Services.AddScoped<IVehicleService,  VehicleService>();
+builder.Services.AddScoped<IDistributionManagementService, DistributionManagementService>();
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
