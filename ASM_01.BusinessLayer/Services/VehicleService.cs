@@ -1,11 +1,12 @@
 ﻿using ASM_01.BusinessLayer.DTOs;
 using ASM_01.BusinessLayer.Services.Abstract;
+using ASM_01.BusinessLayer.Mappers.Abstract;
 using ASM_01.DataAccessLayer.Entities.VehicleModels;
 using ASM_01.DataAccessLayer.Repositories.Abstract;
 
 namespace ASM_01.BusinessLayer.Services;
 
-public class VehicleService(IVehicleRepository _vehicleRepository, IUnitOfWork _unitOfWork) : IVehicleService
+public class VehicleService(IVehicleRepository _vehicleRepository, IUnitOfWork _unitOfWork, IVehicleMapper _vehicleMapper) : IVehicleService
 {
     public async Task<IEnumerable<VehicleDto>> GetAllVehicles()
     {
@@ -17,20 +18,7 @@ public class VehicleService(IVehicleRepository _vehicleRepository, IUnitOfWork _
                 .OrderByDescending(p => p.EffectiveDate)
                 .FirstOrDefault();
 
-            return new VehicleDto
-            {
-                ModelId = t.EvModelId,
-                VehicleId = t.EvTrimId,
-                ModelName = t.EvModel.ModelName,
-                TrimName = t.TrimName,
-                TrimId = t.EvTrimId,
-                ModelYear = t.ModelYear,
-                Description = t.Description,
-                Status = t.EvModel.Status.ToString(),
-                Price = latestPrice?.ListedPrice ?? 0,
-                EffectiveDate = latestPrice?.EffectiveDate ?? DateTime.MinValue,
-                Specifications = new Dictionary<string, string>()
-            };
+            return _vehicleMapper.MapToVehicleDto(t, latestPrice, new Dictionary<string, string>());
         }).ToList();
 
         var specs = await _vehicleRepository.GetAllSpecsAsync();
@@ -62,18 +50,7 @@ public class VehicleService(IVehicleRepository _vehicleRepository, IUnitOfWork _
             ts => ts.Value + (ts.Spec.Unit != null ? $" {ts.Spec.Unit}" : "")
         );
 
-        return new VehicleDto
-        {
-            ModelId = trim.EvModelId,
-            VehicleId = trim.EvTrimId,
-            ModelName = trim.EvModel.ModelName,
-            TrimName = trim.TrimName,
-            Description = trim.Description,
-            Status = trim.EvModel.Status.ToString(),
-            Price = latestPrice?.ListedPrice ?? 0,
-            EffectiveDate = latestPrice?.EffectiveDate ?? DateTime.MinValue,
-            Specifications = specs
-        };
+        return _vehicleMapper.MapToVehicleDto(trim, latestPrice, specs);
     }
 
     public async Task<IEnumerable<VehicleDto>> SearchVehicles(string keyword)
@@ -91,19 +68,7 @@ public class VehicleService(IVehicleRepository _vehicleRepository, IUnitOfWork _
                 ts => ts.Value + (ts.Spec.Unit != null ? $" {ts.Spec.Unit}" : "")
             );
 
-            result.Add(new VehicleDto
-            {
-                ModelId = trim.EvModelId,
-                VehicleId = trim.EvTrimId,
-                ModelName = trim.EvModel.ModelName,
-                TrimName = trim.TrimName,
-                Description = trim.Description,
-                Status = trim.EvModel.Status.ToString(),
-                ModelYear = trim.ModelYear,
-                Price = latestPrice?.ListedPrice ?? 0,
-                EffectiveDate = latestPrice?.EffectiveDate ?? DateTime.MinValue,
-                Specifications = specs
-            });
+            result.Add(_vehicleMapper.MapToVehicleDto(trim, latestPrice, specs));
         }
 
         return result;
@@ -125,15 +90,7 @@ public class VehicleService(IVehicleRepository _vehicleRepository, IUnitOfWork _
                 ts => ts.Value + (ts.Spec.Unit != null ? $" {ts.Spec.Unit}" : "")
             );
 
-            result.Add(new VehicleComparisonDto
-            {
-                VehicleId = trim.EvTrimId,
-                ModelName = trim.EvModel.ModelName,
-                TrimName = trim.TrimName,
-                Price = latestPrice?.ListedPrice ?? 0,
-                EffectiveDate = latestPrice?.EffectiveDate ?? DateTime.MinValue,
-                Specifications = specs
-            });
+            result.Add(_vehicleMapper.MapToVehicleComparisonDto(trim, latestPrice, specs));
         }
 
         return result;
@@ -148,12 +105,7 @@ public class VehicleService(IVehicleRepository _vehicleRepository, IUnitOfWork _
         if (exists)
             throw new InvalidOperationException("A model with this name already exists.");
 
-        var model = new EvModel
-        {
-            ModelName = dto.ModelName,
-            Description = dto.Description,
-            Status = dto.Status
-        };
+        var model = _vehicleMapper.MapToEvModel(dto);
 
         return await _vehicleRepository.CreateModelAsync(model);
     }
@@ -165,24 +117,19 @@ public class VehicleService(IVehicleRepository _vehicleRepository, IUnitOfWork _
         if (model == null)
             throw new InvalidOperationException("Vehicle model not found.");
 
-        var trim = new EvTrim
-        {
-            EvModelId = dto.EvModelId,
-            TrimName = dto.TrimName,
-            ModelYear = dto.ModelYear,
-            Description = dto.Description
-        };
+        var trim = _vehicleMapper.MapToEvTrim(dto);
 
         var createdTrim = await _vehicleRepository.CreateTrimAsync(trim);
 
         if (dto.ListedPrice.HasValue)
         {
-            var price = new TrimPrice
+            var priceDto = new UpdateVehicleTrimPriceDto
             {
                 EvTrimId = createdTrim.EvTrimId,
-                ListedPrice = dto.ListedPrice.Value,
+                NewListedPrice = dto.ListedPrice.Value,
                 EffectiveDate = DateTime.UtcNow
             };
+            var price = _vehicleMapper.MapToTrimPrice(priceDto);
             await _vehicleRepository.CreatePriceAsync(price);
         }
 
@@ -214,12 +161,7 @@ public class VehicleService(IVehicleRepository _vehicleRepository, IUnitOfWork _
             throw new InvalidOperationException("EV Trim not found.");
 
         // Create new price record (we keep history)
-        var newPrice = new TrimPrice
-        {
-            EvTrimId = dto.EvTrimId,
-            ListedPrice = dto.NewListedPrice,
-            EffectiveDate = dto.EffectiveDate ?? DateTime.UtcNow
-        };
+        var newPrice = _vehicleMapper.MapToTrimPrice(dto);
 
         return await _vehicleRepository.CreatePriceAsync(newPrice);
     }
@@ -230,26 +172,12 @@ public class VehicleService(IVehicleRepository _vehicleRepository, IUnitOfWork _
 
         if (model == null) return null;
 
-        return new VehicleModelDto
-        {
-            EvModelId = model.EvModelId,
-            ModelName = model.ModelName,
-            Description = model.Description,
-            ModelYear = model.Trims.Max(t => t.ModelYear),
-            Status = model.Status
-        };
+        return _vehicleMapper.MapToVehicleModelDto(model);
     }
     
     public async Task<IEnumerable<VehicleModelDto>> GetAllModel()
     {
         var models = await _vehicleRepository.GetAllModelsAsync();
-        return models.Select(model => new VehicleModelDto
-        {
-            EvModelId = model.EvModelId,
-            ModelName = model.ModelName,
-            Description = model.Description,
-            ModelYear = model.Trims.Max(t => t.ModelYear),
-            Status = model.Status
-        });
+        return models.Select(model => _vehicleMapper.MapToVehicleModelDto(model));
     }
 }
