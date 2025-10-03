@@ -7,14 +7,18 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace ASM_01.WebApp.Controllers;
+public class ReqObj
+{
+    public string? abc { get; set; }
+    public string? searchTerm { get; set; }
+}
 
 [Authorize]
 public class VehicleController(IVehicleService vehicleService) : Controller
 {
-
-    // GET: /Vehicle/Catalog
-    public async Task<IActionResult> Catalog(string? searchTerm)
+    public async Task<IActionResult> Catalog([FromQuery] string? searchTerm)
     {
+
         if (searchTerm != null)
         {
             var searchDtos = await vehicleService.SearchVehicles(searchTerm);

@@ -1,14 +1,16 @@
 ﻿using ASM_01.BusinessLayer.DTOs;
 using ASM_01.BusinessLayer.Services.Abstract;
+using ASM_01.DataAccessLayer.Persistence;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ASM_01.BusinessLayer.Services
 {
-    public class SimpleAuthService : ISimpleAuthService
+    public class SimpleAuthService(EVRetailsDbContext _db) : ISimpleAuthService
     {
         /// <summary>
         /// Login method that validates username and password and returns an AuthDto if successful.
@@ -19,20 +21,40 @@ namespace ASM_01.BusinessLayer.Services
         /// <exception cref="UnauthorizedAccessException"></exception>
         public AuthDto Login(string username, string password)
         {
-            // In a real application, you would validate the username and password against a database or other data source.
-            // Here, we will just return a simple AuthDto for demonstration purposes.
-            if ((username == "distributor" && password == "Distributor@0") || (username == "dealer" && password == "Dealer@0"))
+            var user = _db.Users.FirstOrDefault(u => u.Username == username);
+            if (user == null || user.PasswordHash != HashPassword(password))
             {
+                throw new UnauthorizedAccessException("Invalid username or password.");
+            }
+
+            if (user.Role == "DEALER")
+            {
+                var dealer = _db.Dealers.FirstOrDefault(d => d.UserId == user.UserId)!;
                 return new AuthDto
                 {
-                    Id = 1, // In a real application, this would be the user's ID from the database.
+                    Id = dealer.DealerId,
                     Username = username,
                     Role = username.ToUpper()
                 };
             }
-            else
+            else if (user.Role == "DISTRIBUTOR")
             {
-                throw new UnauthorizedAccessException("Invalid username or password.");
+                return new AuthDto
+                {
+                    Id = user.UserId,
+                    Username = username,
+                    Role = username.ToUpper()
+                };
+            }
+            throw new UnauthorizedAccessException("User role not recognized.");
+        }
+
+        private static string HashPassword(string password)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+                return Convert.ToBase64String(hashedBytes);
             }
         }
     }

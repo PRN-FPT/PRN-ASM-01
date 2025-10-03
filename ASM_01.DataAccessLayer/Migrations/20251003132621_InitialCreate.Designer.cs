@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ASM_01.DataAccessLayer.Migrations
 {
     [DbContext(typeof(EVRetailsDbContext))]
-    [Migration("20250929113219_AddWarehouseManagement")]
-    partial class AddWarehouseManagement
+    [Migration("20251003132621_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -422,7 +422,13 @@ namespace ASM_01.DataAccessLayer.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
                     b.HasKey("DealerId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("Dealers");
 
@@ -431,7 +437,8 @@ namespace ASM_01.DataAccessLayer.Migrations
                         {
                             DealerId = 1,
                             Address = "New York, NY",
-                            Name = "City EV Motors"
+                            Name = "City EV Motors",
+                            UserId = 1
                         });
                 });
 
@@ -472,6 +479,63 @@ namespace ASM_01.DataAccessLayer.Migrations
                     b.HasIndex("EvTrimId");
 
                     b.ToTable("DistributionRequests");
+                });
+
+            modelBuilder.Entity("ASM_01.DataAccessLayer.Entities.Warehouse.User", b =>
+                {
+                    b.Property<int>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("Username")
+                        .IsUnique();
+
+                    b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = 1,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            PasswordHash = "QmGJk7SKOTvDnRcZHcrFKV28WBJmOIKlHhrf906pTAA=",
+                            Role = "DISTRIBUTOR",
+                            Username = "distributor"
+                        },
+                        new
+                        {
+                            UserId = 2,
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            PasswordHash = "51GXL9fbslr7yF7K4MS3GW7sOuQJGwfcJ/+CAwn7m0I=",
+                            Role = "DEALER",
+                            Username = "dealer"
+                        });
                 });
 
             modelBuilder.Entity("ASM_01.DataAccessLayer.Entities.Warehouse.VehicleStock", b =>
@@ -555,6 +619,17 @@ namespace ASM_01.DataAccessLayer.Migrations
                     b.Navigation("EvTrim");
 
                     b.Navigation("Spec");
+                });
+
+            modelBuilder.Entity("ASM_01.DataAccessLayer.Entities.Warehouse.Dealer", b =>
+                {
+                    b.HasOne("ASM_01.DataAccessLayer.Entities.Warehouse.User", "User")
+                        .WithOne()
+                        .HasForeignKey("ASM_01.DataAccessLayer.Entities.Warehouse.Dealer", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ASM_01.DataAccessLayer.Entities.Warehouse.DistributionRequest", b =>

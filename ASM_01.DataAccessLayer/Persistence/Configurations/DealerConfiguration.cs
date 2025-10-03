@@ -11,5 +11,11 @@ public class DealerConfiguration : IEntityTypeConfiguration<Dealer>
         builder.HasKey(d => d.DealerId);
         builder.Property(d => d.Name).IsRequired().HasMaxLength(100);
         builder.Property(d => d.Address).HasMaxLength(200);
+
+        // Configure the relationship with User (one-to-one, optional)
+        builder.HasOne(d => d.User)
+            .WithOne()
+            .HasForeignKey<Dealer>(u => u.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

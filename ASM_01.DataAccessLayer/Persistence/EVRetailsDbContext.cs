@@ -3,11 +3,8 @@ using ASM_01.DataAccessLayer.Entities.Warehouse;
 using ASM_01.DataAccessLayer.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace ASM_01.DataAccessLayer.Persistence
 {
@@ -31,6 +28,16 @@ namespace ASM_01.DataAccessLayer.Persistence
             // Replace with your actual connection string
             return configuration.GetConnectionString("DefaultConnection") ?? throw new ArgumentNullException("Connection String not found in DbContext");
         }
+
+        private static string HashPassword(string password)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+                return Convert.ToBase64String(hashedBytes);
+            }
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Apply all configurations from the current assembly
@@ -99,7 +106,26 @@ namespace ASM_01.DataAccessLayer.Persistence
             );
 
             modelBuilder.Entity<Dealer>().HasData(
-                new Dealer { DealerId = 1, Name = "City EV Motors", Address = "New York, NY" }
+                new Dealer { DealerId = 1, Name = "City EV Motors", Address = "New York, NY", UserId = 1 }
+            );
+
+            modelBuilder.Entity<User>().HasData(
+                new User
+                {
+                    UserId = 1,
+                    Username = "distributor",
+                    PasswordHash = HashPassword("Distributor@0"),
+                    Role = "DISTRIBUTOR",
+                    CreatedAt = new DateTime(2024, 1, 1)
+                },
+                new User
+                {
+                    UserId = 2,
+                    Username = "dealer",
+                    PasswordHash = HashPassword("Dealer@0"),
+                    Role = "DEALER",
+                    CreatedAt = new DateTime(2024, 1, 1)
+                }
             );
 
             modelBuilder.Entity<VehicleStock>().HasData(
@@ -131,6 +157,7 @@ namespace ASM_01.DataAccessLayer.Persistence
         public DbSet<Spec> Specs { get; set; }
         public DbSet<TrimSpec> TrimSpecs { get; set; }
         public DbSet<Dealer> Dealers { get; set; }
+        public DbSet<User> Users { get; set; }
         public DbSet<VehicleStock> VehicleStocks { get; set; }
         public DbSet<DistributionRequest> DistributionRequests { get; set; }
 
