@@ -4,6 +4,8 @@ using ASM_01.DataAccessLayer.Repositories;
 using ASM_01.DataAccessLayer.Repositories.Abstract;
 using ASM_01.BusinessLayer.Services;
 using ASM_01.BusinessLayer.Services.Abstract;
+using ASM_01.BusinessLayer.Mappers;
+using ASM_01.BusinessLayer.Mappers.Abstract;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,6 +23,11 @@ builder.Services.AddScoped<IVehicleRepository, VehicleRepository>();
 builder.Services.AddScoped<IDealerRepository, DealerRepository>();
 builder.Services.AddScoped<IStockRepository, StockRepository>();
 builder.Services.AddScoped<IDistributionRequestRepository, DistributionRequestRepository>();
+
+// Dependency Injection for mappers
+builder.Services.AddScoped<IVehicleMapper, VehicleMapper>();
+builder.Services.AddScoped<IDistributionMapper, DistributionMapper>();
+builder.Services.AddScoped<IDealerMapper, DealerMapper>();
 
 // Dependency Injection for services
 builder.Services.AddScoped<ISimpleAuthService, SimpleAuthService>();
