@@ -1,5 +1,6 @@
 using ASM_01.BusinessLayer.DTOs;
 using ASM_01.BusinessLayer.Services.Abstract;
+using ASM_01.BusinessLayer.Mappers.Abstract;
 using ASM_01.DataAccessLayer.Entities.Warehouse;
 using ASM_01.DataAccessLayer.Enums;
 using ASM_01.DataAccessLayer.Repositories.Abstract;
@@ -13,19 +14,22 @@ public class DistributionManagementService : IDistributionManagementService
     private readonly IDealerRepository _dealerRepository;
     private readonly IVehicleRepository _vehicleRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IDistributionMapper _distributionMapper;
 
     public DistributionManagementService(
         IStockRepository stockRepository,
         IDistributionRequestRepository distributionRequestRepository,
         IDealerRepository dealerRepository,
         IVehicleRepository vehicleRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IDistributionMapper distributionMapper)
     {
         _stockRepository = stockRepository;
         _distributionRequestRepository = distributionRequestRepository;
         _dealerRepository = dealerRepository;
         _vehicleRepository = vehicleRepository;
         _unitOfWork = unitOfWork;
+        _distributionMapper = distributionMapper;
     }
     public async Task AddOrUpdateStockAsync(int dealerId, int evTrimId, int deltaQuantity, CancellationToken ct = default)
     {
@@ -51,14 +55,13 @@ public class DistributionManagementService : IDistributionManagementService
         var trimExists = await _vehicleRepository.TrimExistsAsync(evTrimId);
         if (!trimExists) throw new InvalidOperationException("Trim not found.");
 
-        var req = new DistributionRequest
+        var dto = new CreateDistributionRequestDto
         {
             DealerId = dealerId,
             EvTrimId = evTrimId,
-            RequestedQuantity = requestedQty,
-            Status = DistributionStatus.Pending,
-            RequestedAt = DateTime.UtcNow
+            RequestedQuantity = requestedQty
         };
+        var req = _distributionMapper.MapToDistributionRequest(dto);
 
         return await _distributionRequestRepository.CreateRequestAsync(req);
     }
@@ -144,18 +147,7 @@ public class DistributionManagementService : IDistributionManagementService
     {
         var requests = await _distributionRequestRepository.GetRequestsByDealerIdAsync(dealerId);
 
-        var dtos = requests.Select(r => new DistributionRequestDto
-        {
-            RequestId = r.DistributionRequestId,
-            ModelName = r.EvTrim?.EvModel?.ModelName ?? "N/A",
-            TrimName = r.EvTrim?.TrimName ?? "N/A",
-            RequestQuantity = r.RequestedQuantity,
-            ApprovedQuantity = r.ApprovedQuantity ?? 0,
-            ModelYear = r.EvTrim?.ModelYear ?? DateTime.MinValue.Year,
-            ApprovalDate = r.ApprovedAt,
-            RequestDate = r.RequestedAt,
-            Status = r.Status.ToString()
-        }).ToList();
+        var dtos = requests.Select(r => _distributionMapper.MapToDistributionRequestDto(r)).ToList();
 
         return dtos;
     }
@@ -163,38 +155,14 @@ public class DistributionManagementService : IDistributionManagementService
     public async Task<IReadOnlyList<DistributionRequestDto>> GetPendingRequestsAsync(CancellationToken ct = default)
     {
         var requests = await _distributionRequestRepository.GetPendingRequestsAsync();
-        var dtos = requests.Select(r => new DistributionRequestDto
-        {
-            RequestId = r.DistributionRequestId,
-            ModelName = r.EvTrim?.EvModel?.ModelName ?? "N/A",
-            TrimName = r.EvTrim?.TrimName ?? "N/A",
-            RequestQuantity = r.RequestedQuantity,
-            ApprovedQuantity = r.ApprovedQuantity ?? 0,
-            ModelYear = r.EvTrim?.ModelYear ?? DateTime.MinValue.Year,
-            ApprovalDate = r.ApprovedAt,
-            RequestDate = r.RequestedAt,
-            DealerName = r.Dealer?.Name ?? "N/A",
-            Status = r.Status.ToString()
-        }).ToList();
+        var dtos = requests.Select(r => _distributionMapper.MapToDistributionRequestDto(r)).ToList();
         return dtos;
     }
 
     public async Task<IEnumerable<DistributionRequestDto>> GetAllRequestsAsync(CancellationToken ct = default)
     {
         var requests = await _distributionRequestRepository.GetAllRequestsAsync();
-        var dtos = requests.Select(r => new DistributionRequestDto
-        {
-            RequestId = r.DistributionRequestId,
-            ModelName = r.EvTrim?.EvModel?.ModelName ?? "N/A",
-            TrimName = r.EvTrim?.TrimName ?? "N/A",
-            RequestQuantity = r.RequestedQuantity,
-            ApprovedQuantity = r.ApprovedQuantity ?? 0,
-            ModelYear = r.EvTrim?.ModelYear ?? DateTime.MinValue.Year,
-            ApprovalDate = r.ApprovedAt,
-            RequestDate = r.RequestedAt,
-            DealerName = r.Dealer?.Name ?? "N/A",
-            Status = r.Status.ToString()
-        }).ToList();
+        var dtos = requests.Select(r => _distributionMapper.MapToDistributionRequestDto(r)).ToList();
 
         return dtos;
     }
